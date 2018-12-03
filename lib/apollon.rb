@@ -108,7 +108,10 @@ module Apollon
       libraries.each do |file_path|
         apollon_home_size += File.size(file_path)
       end
-      return if apollon_home_size < CACHE_UPPER_LIMIT
+      if apollon_home_size < CACHE_UPPER_LIMIT
+        UI.notice('Cache size is less than 1G!')
+        return
+      end
 
       # sort using modification time
       libraries.sort! do |lhs, rhs| File.new(lhs).mtime <=> File.new(rhs).mtime end
@@ -124,7 +127,10 @@ module Apollon
       end
 
       # delete
-      deletable_files.each do |file| FileUtils.remove_entry(file) end
+      deletable_files.each do |file|
+        UI.notice("Delete #{file},  Last Time of Usage is #{File.new(file).mtime}.")
+        FileUtils.remove_entry(file)
+      end
     end
 
 	end
@@ -217,7 +223,7 @@ module Apollon
 				next unless is_dev_pod(target.name)
 				relative_path = parse_podfile_lock['EXTERNAL SOURCES'][target.name][:path]
 				spec_dir = File.expand_path(relative_path, "#{Location.pod_project_dir}/..")
-				next if %x(git status -s | wc -l).strip == '0'
+				next if %x(git -C #{spec_dir} status -s | wc -l).strip == '0'
 				report_error "#{spec_dir} is dirty!"
 			end
 
@@ -226,32 +232,31 @@ module Apollon
 
 				if parse_apollon_config[target.name]
 
-					if File.exists?(Location.lib_path_in_xcode(target.name))
-						FileUtils.remove_entry(Location.lib_path_in_xcode(target.name))
-					end
-
 					commit_id = commit_id_of_pod_in_xcode(target.name)
 					lib_path_in_a = Location.lib_path_in_apollon(target, commit_id)
-					if File.exists?(lib_path_in_a)
-            FileUtils.touch(lib_path_in_a)
-						FileUtils.symlink(lib_path_in_a, Location.lib_path_in_xcode(target.name))
-					end
+          lib_path_in_x = Location.lib_path_in_xcode(target.name)
 
-					exists_lib_in_xcode = Location.lib_path_in_xcode(target.name)
+          if File.exists?(lib_path_in_a)
+            FileUtils.rm_f(lib_path_in_x) if File.exists?(lib_path_in_x)
+            FileUtils.touch(lib_path_in_a)
+            FileUtils.symlink(lib_path_in_a, lib_path_in_x)
+          end
+
+					exists_lib_in_xcode = File.exists?(lib_path_in_x) && File.symlink?(lib_path_in_x)
 					if exists_lib_in_xcode
 						unless target.source_build_phase.files.empty?
 							dirty = true
 							target.source_build_phase.clear
 							output << "#{target.name}: Turn on Staticization!"
 						end
-					else
+          else
 						if target.source_build_phase.files.empty?
 							dirty = true
 							recover_compile_source_content(target)
 							output << "#{target.name}: Turn off Staticization!"
 						end
 					end
-				else
+        else
 					if target.source_build_phase.files.empty?
 						dirty = true
 						recover_compile_source_content(target)
@@ -294,7 +299,7 @@ module Apollon
 				commit_id = commit_id_of_pod_in_xcode(target.name)
 				exists_in_apollon = File.exists?(Location.lib_path_in_apollon(target, commit_id))
 				if exists_in_xcode && !exists_in_apollon
-					FileUtils.symlink(Location.lib_path_in_xcode(target.name), Location.lib_dir_in_apollon(target, commit_id))
+					FileUtils.cp(Location.lib_path_in_xcode(target.name), Location.lib_dir_in_apollon(target, commit_id))
 				end
 			end
 		end
@@ -474,7 +479,7 @@ module Apollon
 			sync_script.show_env_vars_in_log = '0'
 			sync_script.shell_script = StringIO.open do |str|
 				str.puts 'PATH=~/.rbenv/shims:$PATH'
-				str.puts 'apollon cache'
+				str.puts 'apollon --cache'
 				str.string
 			end
 
@@ -485,7 +490,7 @@ module Apollon
 			sync_back_script.show_env_vars_in_log = '0'
 			sync_back_script.shell_script = StringIO.open do |str|
 				str.puts 'PATH=~/.rbenv/shims:$PATH'
-				str.puts 'apollon sync_back'
+				str.puts 'apollon --sync_back'
 				str.string
 			end
 
@@ -536,7 +541,7 @@ module Apollon
 			FileUtils.mkdir_p(source_mapping_dir)
 
 			pods_project.targets.each do |target|
-				next if (target.name == APOLLON || target.name.start_with?('Pod-'))
+				next if (target.name == APOLLON || target.name.start_with?('Pods-'))
 				cs_mapping = Array.new
 				target.source_build_phase.files.each do |build_file|
 					unless build_file.settings.nil?
@@ -604,7 +609,7 @@ module Apollon
 			end
 
 			# install script
-      UI.notice('Install script')
+      UI.notice('Install Apollon Scripts!')
 			if ::Pod::Podfile.from_file(podfile).instance_variable_get(:@post_install_callback).nil?
 				File.open(podfile, 'a+') do |file|
 					file.puts
@@ -641,7 +646,6 @@ ARGV.options do |opt|
   opt.program_name = Apollon::APOLLON
 
   opt.on('--cache', 'sync apollon libraries to xcode') do
-    puts 1
     Apollon::RuntimeMethod.synchronize_apollon_and_xcode
   end
 
