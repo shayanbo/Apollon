@@ -16,31 +16,31 @@ require 'colored2/object'
 module Apollon
 
 	APOLLON = 'Apollon'
-  VERSION = '0.0.1'
+	VERSION = '0.0.1'
 
-  module UI
+	module UI
 
-    def self.title(msg)
-      $stdout.puts msg.green.bold
-    end
+		def self.title(msg)
+			$stdout.puts msg.green.bold
+		end
 
-    def self.done
-      $stdout.puts '['.green.bold + 'Apollon'.green + '] '.green.bold + 'Done!'.green.bold
-    end
+		def self.done
+			$stdout.puts '['.green.bold + 'Apollon'.green + '] '.green.bold + 'Done!'.green.bold
+		end
 
-    def self.notice(msg)
-      $stdout.puts '['.green.bold + 'Apollon'.green + '] '.green.bold + msg.green.bold
-    end
+		def self.notice(msg)
+			$stdout.puts '['.green.bold + 'Apollon'.green + '] '.green.bold + msg.green.bold
+		end
 
-    def self.warn(msg)
-      $stdout.puts '['.yellow.bold + 'Apollon'.yellow + '] '.yellow.bold + msg.yellow.bold
-    end
+		def self.warn(msg)
+			$stdout.puts '['.yellow.bold + 'Apollon'.yellow + '] '.yellow.bold + msg.yellow.bold
+		end
 
-    def self.error(msg)
-      $stderr.puts '['.red.bold + 'Apollon'.red + '] '.red.bold + msg.red.bold
-    end
+		def self.error(msg)
+			$stderr.puts '['.red.bold + 'Apollon'.red + '] '.red.bold + msg.red.bold
+		end
 
-  end
+	end
 
 	module Location
 
@@ -93,45 +93,45 @@ module Apollon
 
 	module Cache
 
-    CACHE_UPPER_LIMIT = 1024 * 1024 * 1024 # 1G upper limit
+		CACHE_UPPER_LIMIT = 1024 * 1024 * 1024 # 1G upper limit
 
 		def self.clean
-      FileUtils.remove_dir(Location.apollon_home) if Dir.exists?(Location.apollon_home)
-    end
+			FileUtils.remove_dir(Location.apollon_home) if Dir.exists?(Location.apollon_home)
+		end
 
-    def self.clean_old
+		def self.clean_old
 
-      apollon_home_size = 0
-      libraries = Dir.glob(File.join(Location.apollon_home, '**/*'))
+			apollon_home_size = 0
+			libraries = Dir.glob(File.join(Location.apollon_home, '**/*'))
 
-      # caculate apollon size
-      libraries.each do |file_path|
-        apollon_home_size += File.size(file_path)
-      end
-      if apollon_home_size < CACHE_UPPER_LIMIT
-        UI.notice('Cache size is less than 1G!')
-        return
-      end
+			# caculate apollon size
+			libraries.each do |file_path|
+				apollon_home_size += File.size(file_path)
+			end
+			if apollon_home_size < CACHE_UPPER_LIMIT
+				UI.notice('Cache size is less than 1G!')
+				return
+			end
 
-      # sort using modification time
-      libraries.sort! do |lhs, rhs| File.new(lhs).mtime <=> File.new(rhs).mtime end
+			# sort using modification time
+			libraries.sort! do |lhs, rhs| File.new(lhs).mtime <=> File.new(rhs).mtime end
 
-      # sum deletable files
-      size_to_delete = apollon_home_size - CACHE_UPPER_LIMIT
-      deletable_files = []
-      libraries.each do |file_path|
-        size_to_delete -= File.size(file_path)
-        if (size_to_delete > 0)
-          deletable_files << file_path
-        end
-      end
+			# sum deletable files
+			size_to_delete = apollon_home_size - CACHE_UPPER_LIMIT
+			deletable_files = []
+			libraries.each do |file_path|
+				size_to_delete -= File.size(file_path)
+				if (size_to_delete > 0)
+					deletable_files << file_path
+				end
+			end
 
-      # delete
-      deletable_files.each do |file|
-        UI.notice("Delete #{file},  Last Time of Usage is #{File.new(file).mtime}.")
-        FileUtils.remove_entry(file)
-      end
-    end
+			# delete
+			deletable_files.each do |file|
+				UI.notice("Delete #{file},  Last Time of Usage is #{File.new(file).mtime}.")
+				FileUtils.remove_entry(file)
+			end
+		end
 
 	end
 
@@ -234,13 +234,13 @@ module Apollon
 
 					commit_id = commit_id_of_pod_in_xcode(target.name)
 					lib_path_in_a = Location.lib_path_in_apollon(target, commit_id)
-          lib_path_in_x = Location.lib_path_in_xcode(target.name)
+					lib_path_in_x = Location.lib_path_in_xcode(target.name)
 
-          if File.exists?(lib_path_in_a)
-            FileUtils.rm_f(lib_path_in_x) if File.exists?(lib_path_in_x)
-            FileUtils.touch(lib_path_in_a)
-            FileUtils.symlink(lib_path_in_a, lib_path_in_x)
-          end
+					if File.exists?(lib_path_in_a)
+						FileUtils.rm_f(lib_path_in_x) if File.exists?(lib_path_in_x)
+						FileUtils.touch(lib_path_in_a)
+						FileUtils.symlink(lib_path_in_a, lib_path_in_x)
+					end
 
 					exists_lib_in_xcode = File.exists?(lib_path_in_x) && File.symlink?(lib_path_in_x)
 					if exists_lib_in_xcode
@@ -285,7 +285,7 @@ module Apollon
 
 			if dirty
 				pod_project.save
-        output.each do |line| $stderr.puts line end
+				output.each do |line| $stderr.puts line end
 				report_error "[Apollon] Re-Run!"
 			end
 		end
@@ -294,7 +294,7 @@ module Apollon
 
 			pod_project.targets.select do |target|
 				parse_apollon_config[target.name]
-      end.each do |target|
+			end.each do |target|
 				exists_in_xcode = File.exists?(Location.lib_path_in_xcode(target.name))
 				commit_id = commit_id_of_pod_in_xcode(target.name)
 				exists_in_apollon = File.exists?(Location.lib_path_in_apollon(target, commit_id))
@@ -318,7 +318,7 @@ module Apollon
 
 		def self.uninstall
 
-      UI.title('Uninstalling Apollon for current Xcode project!')
+			UI.title('Uninstalling Apollon for current Xcode project!')
 
 			podfile = File.join(Dir.pwd, 'Podfile')
 			unless File.exists?(podfile)
@@ -333,7 +333,7 @@ module Apollon
 			end
 
 			# remove podfile hook
-      UI.notice('Remove podfile hook')
+			UI.notice('Remove podfile hook')
 			podfile_contents[/require\s+'apollon'\s+Apollon::Installer\.install\(installer\)/] = ''
 			File.open(podfile, 'w') do |file|
 				file.puts podfile_contents
@@ -344,14 +344,14 @@ module Apollon
 			apollon_target = pods_project.targets.find do |target| target.name == APOLLON end
 
 			# remove dependency
-      UI.notice('Remove dependency')
+			UI.notice('Remove dependency')
 			pods_project.targets.each do |target|
 				target_dependency = target.dependency_for_target(apollon_target)
 				target_dependency.remove_from_project unless target_dependency.nil?
 			end unless apollon_target.nil?
 
 			# remove configuration
-      UI.notice('Remove configuration')
+			UI.notice('Remove configuration')
 			apollon_target.build_configurations.each do |configuration|
 				configuration.remove_from_project
 			end unless apollon_target.nil?
@@ -361,19 +361,19 @@ module Apollon
 				apollon_target.build_configuration_list.remove_from_project
 
 				# remove compile sources
-        UI.notice('Remove dummy source build file')
+				UI.notice('Remove dummy source build file')
 				apollon_target.source_build_phase.clear
 
 				# remove product reference
-        UI.notice('Remove product reference')
+				UI.notice('Remove product reference')
 				apollon_target.product_reference.remove_from_project
 
 				# remove target
-        UI.notice('Remove apollon target')
+				UI.notice('Remove apollon target')
 				apollon_target.remove_from_project
 
 				# remove apollonfile reference
-        UI.notice('Remove Apollonfile reference')
+				UI.notice('Remove Apollonfile reference')
 				apollonfile_ref = pods_project.main_group["Apollonfile"]
 				unless apollonfile_ref.nil?
 					apollonfile_ref.remove_from_project
@@ -381,15 +381,15 @@ module Apollon
 			end
 
 			# remove apollon file
-      UI.notice('Remove Apollonfile')
+			UI.notice('Remove Apollonfile')
 			apollonfile = File.join(pods_project.project_dir, 'Apollonfile')
 			if File.exists?(apollonfile)
 				FileUtils.remove_entry(apollonfile)
 			end
 
 			# remove targets support files & reference (dummy source)
-      UI.notice('Remove targets support files & reference')
-      apollon_group_in_support_files = pods_project["Targets Support Files"]["Apollon"]
+			UI.notice('Remove targets support files & reference')
+			apollon_group_in_support_files = pods_project["Targets Support Files"]["Apollon"]
 			unless apollon_group_in_support_files.nil?
 				apollon_dir_in_support_files = apollon_group_in_support_files.real_path.to_path
 				if Dir.exists?(apollon_dir_in_support_files)
@@ -399,7 +399,7 @@ module Apollon
 			end
 
 			# add all compile sources as before
-      UI.notice('Add all compile sources as before')
+			UI.notice('Add all compile sources as before')
 			pods_project.targets.each do |target|
 
 				next unless target.source_build_phase.files.empty?
@@ -408,60 +408,60 @@ module Apollon
 
 				project_dir = File.join(Dir.pwd, 'Pods')
 				Apollon::RuntimeMethod.recover_compile_source_content(target, pods_project)
-      end unless apollon_target.nil?
+			end unless apollon_target.nil?
 
-      UI.done
-      pods_project.save
+			UI.done
+			pods_project.save
 		end
 
 		# execute when pod install
 		def self.install(installer)
 
-      UI.title('Installing Apollon to current Xcode project!')
+			UI.title('Installing Apollon to current Xcode project!')
 			pods_project = installer.pods_project
 
 			# disable deterministic_uuids
-      UI.notice('Disable deterministic_uuids')
+			UI.notice('Disable deterministic_uuids')
 			Pod::Installer::InstallationOptions.defaults[:deterministic_uuids] = false
 
-      # use legacy build system (temporarily)
-      UI.notice('Using legacy build system')
+			# use legacy build system (temporarily)
+			UI.notice('Using legacy build system')
 			user_project_path = Pathname.new(installer.aggregate_targets.map(&:user_project_path).compact.uniq.first)
-      user_workspace_setting_path = [
-          user_project_path.dirname.to_path,
-          user_project_path.basename('.xcodeproj').to_path + '.xcworkspace',
-          'xcuserdata',
-          %x(whoami).strip + '.xcuserdatad',
-          'WorkspaceSettings.xcsettings'
-      ].join('/')
+			user_workspace_setting_path = [
+				user_project_path.dirname.to_path,
+				user_project_path.basename('.xcodeproj').to_path + '.xcworkspace',
+				'xcuserdata',
+				%x(whoami).strip + '.xcuserdatad',
+				'WorkspaceSettings.xcsettings'
+			].join('/')
 
-      if File.exists?(user_workspace_setting_path)
-        workspace_setting_plist = CFPropertyList::List.new(:file => user_workspace_setting_path)
-        workspace_setting_hash = CFPropertyList.native_types(workspace_setting_plist.value)
-        workspace_setting_hash['BuildSystemType'] = 'Original'
-        workspace_setting_plist.value = CFPropertyList.guess(workspace_setting_hash)
-        workspace_setting_plist.save(user_workspace_setting_path, CFPropertyList::List::FORMAT_BINARY)
-      else
-        File.open(user_workspace_setting_path, 'w') do |file|
-          file.puts "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-          file.puts "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">"
-          file.puts "<plist version=\"1.0\">"
-          file.puts " <dict>"
-          file.puts "   <key>BuildSystemType</key>"
-	        file.puts "   <string>Original</string>"
-          file.puts " </dict>"
-          file.puts "</plist>"
-        end
-      end
+			if File.exists?(user_workspace_setting_path)
+				workspace_setting_plist = CFPropertyList::List.new(:file => user_workspace_setting_path)
+				workspace_setting_hash = CFPropertyList.native_types(workspace_setting_plist.value)
+				workspace_setting_hash['BuildSystemType'] = 'Original'
+				workspace_setting_plist.value = CFPropertyList.guess(workspace_setting_hash)
+				workspace_setting_plist.save(user_workspace_setting_path, CFPropertyList::List::FORMAT_BINARY)
+			else
+				File.open(user_workspace_setting_path, 'w') do |file|
+					file.puts "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+					file.puts "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">"
+					file.puts "<plist version=\"1.0\">"
+					file.puts " <dict>"
+					file.puts "   <key>BuildSystemType</key>"
+					file.puts "   <string>Original</string>"
+					file.puts " </dict>"
+					file.puts "</plist>"
+				end
+			end
 
 			# create apollon target
-      UI.notice('Create Apollon target')
+			UI.notice('Create Apollon target')
 			group = pods_project.targets.first.product_reference.parent
 			deployment_target = pods_project.build_configuration_list.build_configurations.first.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
 			apollon_target = pods_project.new_target(:static_library, APOLLON, :ios, deployment_target, group)
 
 			# copy [check pods manifest.lock] scripts to Apollon target
-      UI.notice('Copy [Check Pods Manifest.lock] scripts to Apollon target')
+			UI.notice('Copy [Check Pods Manifest.lock] scripts to Apollon target')
 			manifest_script = apollon_target.new_shell_script_build_phase('[Apollon] Check Pods Manifest.lock')
 			manifest_script.show_env_vars_in_log = '0'
 			manifest_script.shell_script = StringIO.open do |str|
@@ -474,7 +474,7 @@ module Apollon
 			end
 
 			# add cache script
-      UI.notice('Add cache script')
+			UI.notice('Add cache script')
 			sync_script = apollon_target.new_shell_script_build_phase("[#{APOLLON}] Sync")
 			sync_script.show_env_vars_in_log = '0'
 			sync_script.shell_script = StringIO.open do |str|
@@ -484,7 +484,7 @@ module Apollon
 			end
 
 			# add script in Pod-<TargetName>
-      UI.notice("Add script in 'Pod-' prefixed target")
+			UI.notice("Add script in 'Pod-' prefixed target")
 			dummy_target = pods_project.targets.find do |target| target.name.start_with?('Pods-') end
 			sync_back_script = dummy_target.new_shell_script_build_phase("[Apollon] Collecting Libraries")
 			sync_back_script.show_env_vars_in_log = '0'
@@ -495,7 +495,7 @@ module Apollon
 			end
 
 			# add dummy source
-      UI.notice("Add dummy source")
+			UI.notice("Add dummy source")
 			apollon_dir_in_support_files = File.join(pods_project.path.parent, 'Target Support Files', APOLLON)
 			FileUtils.mkdir_p(apollon_dir_in_support_files)
 			apollon_dummy_file = File.join(apollon_dir_in_support_files, "#{APOLLON}-dummy.m")
@@ -513,14 +513,14 @@ module Apollon
 			apollon_target.source_build_phase.add_file_reference(dummy_source_reference)
 
 			# add dependency
-      UI.notice("Add dependencies")
+			UI.notice("Add dependencies")
 			pods_project.targets.each do |target|
 				next if target.name == APOLLON
 				target.add_dependency(apollon_target)
 			end
 
 			#save podspecs
-      UI.notice("Save podspecs")
+			UI.notice("Save podspecs")
 			podspecs_dir = File.join(installer.pods_project.project_dir, 'Local Podspecs')
 			FileUtils.remove_dir(podspecs_dir)
 			FileUtils.mkdir_p(podspecs_dir)
@@ -533,7 +533,7 @@ module Apollon
 			end
 
 			# save compile sources
-      UI.notice("Save compile sources")
+			UI.notice("Save compile sources")
 			source_mapping_dir = File.join(pods_project.project_dir, 'Source Mappings')
 			if Dir.exists?(source_mapping_dir)
 				FileUtils.remove_dir(source_mapping_dir)
@@ -558,7 +558,7 @@ module Apollon
 			end
 
 			# add or update apollonfile
-      UI.notice('Add or update Apollonfile')
+			UI.notice('Add or update Apollonfile')
 			apollonfile = File.join(pods_project.path.parent, "#{APOLLON}file")
 			apollonfile_exists = File.exists?(apollonfile)
 			spec_state = installer.analysis_result.podfile_state
@@ -589,7 +589,7 @@ module Apollon
 			plist = CFPropertyList::List.new
 			plist.value = CFPropertyList.guess(apollonfile_hash)
 			plist.save(apollonfile, CFPropertyList::List::FORMAT_BINARY)
-      UI.done
+			UI.done
 		end
 
 		def self.setup
@@ -604,12 +604,12 @@ module Apollon
 			# check apollon installed
 			podfile_contents = File.read(podfile)
 			unless podfile_contents['Apollon::Installer.install(installer)'].nil?
-        UI.error 'Script has been installed!'
+				UI.error 'Script has been installed!'
 				exit 0
 			end
 
 			# install script
-      UI.notice('Install Apollon Scripts!')
+			UI.notice('Install Apollon Scripts!')
 			if ::Pod::Podfile.from_file(podfile).instance_variable_get(:@post_install_callback).nil?
 				File.open(podfile, 'a+') do |file|
 					file.puts
@@ -629,10 +629,10 @@ module Apollon
 				File.open(podfile, 'w') do |file|
 					file.puts podfile_contents
 				end
-      end
+			end
 
 			# run pod install
-      UI.notice('Run pod install')
+			UI.notice('Run pod install')
 			system('pod install')
 		end
 	end
@@ -641,36 +641,36 @@ end
 # main
 ARGV.options do |opt|
 
-  opt.banner = 'Usage: apollon [option]'
-  opt.version = Apollon::VERSION
-  opt.program_name = Apollon::APOLLON
+	opt.banner = 'Usage: apollon [option]'
+	opt.version = Apollon::VERSION
+	opt.program_name = Apollon::APOLLON
 
-  opt.on('--cache', 'sync apollon libraries to xcode') do
-    Apollon::RuntimeMethod.synchronize_apollon_and_xcode
-  end
+	opt.on('--cache', 'sync apollon libraries to xcode') do
+		Apollon::RuntimeMethod.synchronize_apollon_and_xcode
+	end
 
-  opt.on('--sync_back', 'collecting libraries to apollon') do
-    Apollon::RuntimeMethod.collect_libraries_from_xcode
-  end
+	opt.on('--sync_back', 'collecting libraries to apollon') do
+		Apollon::RuntimeMethod.collect_libraries_from_xcode
+	end
 
-  opt.on('--setup', 'install apollon for current Xcode project') do
-    Apollon::Installer.setup
-  end
+	opt.on('--setup', 'install apollon for current Xcode project') do
+		Apollon::Installer.setup
+	end
 
-  opt.on('--remove', 'uninstall apollon of current Xcode project') do
-    Apollon::Installer.uninstall
-  end
+	opt.on('--remove', 'uninstall apollon of current Xcode project') do
+		Apollon::Installer.uninstall
+	end
 
-  opt.on('--clean', 'clean all apollon cached libraries') do
-    Apollon::Cache.clean
-  end
+	opt.on('--clean', 'clean all apollon cached libraries') do
+		Apollon::Cache.clean
+	end
 
-  opt.on('--clean-old', 'clean old apollon cached libraries') do
-    Apollon::Cache.clean_old
-  end
+	opt.on('--clean-old', 'clean old apollon cached libraries') do
+		Apollon::Cache.clean_old
+	end
 
-  opt.on_tail('-h', '--help', 'show all available options') do
-    puts opt
-  end
-  opt.parse!
+	opt.on_tail('-h', '--help', 'show all available options') do
+		puts opt
+	end
+opt.parse!
 end
