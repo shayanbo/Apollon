@@ -182,7 +182,7 @@ module Apollon
 		def self.recover_compile_source_content(target, project = pod_project)
 
 			return if target.name == APOLLON
-			source_mapping_dir = File.join(project.project_dir, 'Compile Sources Mappings')
+			source_mapping_dir = File.join(project.project_dir, 'Sources Mappings')
 			source_mapping_file = File.join(source_mapping_dir, "#{target.name}.cs.json")
 			return unless File.exists?(source_mapping_file)
 			mapping = JSON.load(File.read(source_mapping_file))
@@ -513,7 +513,7 @@ module Apollon
 			apollon_target.source_build_phase.add_file_reference(dummy_source_reference)
 
 			# add dependency
-      UI.notice("Add dependency")
+      UI.notice("Add dependencies")
 			pods_project.targets.each do |target|
 				next if target.name == APOLLON
 				target.add_dependency(apollon_target)
@@ -558,7 +558,7 @@ module Apollon
 			end
 
 			# add or update apollonfile
-      UI.notice('Add or update apollonfile')
+      UI.notice('Add or update Apollonfile')
 			apollonfile = File.join(pods_project.path.parent, "#{APOLLON}file")
 			apollonfile_exists = File.exists?(apollonfile)
 			spec_state = installer.analysis_result.podfile_state
