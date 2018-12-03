@@ -249,14 +249,14 @@ module Apollon
 							target.source_build_phase.clear
 							output << "#{target.name}: Turn on Staticization!"
 						end
-          else
+					else
 						if target.source_build_phase.files.empty?
 							dirty = true
 							recover_compile_source_content(target)
 							output << "#{target.name}: Turn off Staticization!"
 						end
 					end
-        else
+				else
 					if target.source_build_phase.files.empty?
 						dirty = true
 						recover_compile_source_content(target)
