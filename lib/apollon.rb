@@ -202,6 +202,23 @@ module Apollon
 			commit
 		end
 
+		def self.check_if_static_pod_modified_before_build
+
+			pod_project.targets.select do |target|
+
+				relative_path = parse_podfile_lock['EXTERNAL SOURCES'][target.name][:path]
+				spec_dir = File.expand_path(relative_path, "#{Location.pod_project_dir}/..")
+				should_be_static = parse_apollon_config[target.name]
+
+				spec_dir_expression = File.expand_path("**/*.{h,m,mm,c,cc}", spec_dir)
+				Dir.glob(spec_dir_expression) do |file|
+					unless File.directory?(file)
+						FileUtils.chmod(should_be_static ? "u-w" : "u+w", file)
+					end
+				end
+			end
+		end
+
 		def self.synchronize_apollon_and_xcode
 
 			dirty = false
@@ -378,6 +395,14 @@ module Apollon
 				unless apollonfile_ref.nil?
 					apollonfile_ref.remove_from_project
 				end
+			end
+
+			# remove Pods-<TargetName> collecting script
+			pods_project.targets.select do |target|
+				target.start_with?('Pods-')
+			end.each do |target|
+				collecting_script = target.shell_script_build_phases.find do |script| script.name.include?('[Apollon]') end
+				collecting_script.remove_from_project unless collecting_script.nil?
 			end
 
 			# remove apollon file
@@ -589,6 +614,13 @@ module Apollon
 			plist = CFPropertyList::List.new
 			plist.value = CFPropertyList.guess(apollonfile_hash)
 			plist.save(apollonfile, CFPropertyList::List::FORMAT_BINARY)
+
+			# unlock all dev pod source files if exists
+			UI.notice('Unlock source files of all development pods if exists')
+			installer.pods_project.targets.each do |target|
+
+			end
+
 			UI.done
 		end
 
@@ -672,5 +704,5 @@ ARGV.options do |opt|
 	opt.on_tail('-h', '--help', 'show all available options') do
 		puts opt
 	end
-opt.parse!
+	opt.parse!
 end
